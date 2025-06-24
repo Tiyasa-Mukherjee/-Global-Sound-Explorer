@@ -58,12 +58,10 @@ interface Track {
   audioUrl: string;
 }
 
-// Define the correct type for Next.js dynamic route page props
-interface TrackPageProps {
-  params: { id: string };
-}
+// Remove custom TrackPageProps and use Next.js convention for dynamic route props
+type PageProps = { params: { id: string } };
 
-export default function TrackPage({ params }: TrackPageProps) {
+export default function TrackPage({ params }: PageProps) {
   const router = useRouter();
   const [theme, setTheme] = useState<Theme>("light");
   const [track, setTrack] = useState<Track | null>(null);
