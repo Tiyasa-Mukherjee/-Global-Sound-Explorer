@@ -555,14 +555,14 @@ export default function SonaraLanding() {
                     ))}
                   </div>
                   <p className={clsx(
-                    "text-lg mb-6",
+                    "italic mb-4",
                     {
                       "text-gray-600": theme === "light",
                       "text-gray-400": theme === "dark",
                       "text-rose-700": theme === "pastel",
                     }
                   )}>
-                    "{testimonial.quote}"
+                    &quot;{testimonial.quote}&quot;
                   </p>
                   <div>
                     <p className="font-bold">{testimonial.author}</p>

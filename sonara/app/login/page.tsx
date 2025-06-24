@@ -16,8 +16,13 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       router.push("/profile");
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      // TypeScript: err is unknown, so we need to check type
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unknown error occurred");
+      }
     }
   };
 
@@ -26,7 +31,7 @@ export default function LoginPage() {
     try {
       await signInWithPopup(auth, provider);
       router.push("/profile");
-    } catch (err) {
+    } catch {
       setError("Google sign-in failed");
     }
   };
@@ -35,6 +40,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200">
       <form onSubmit={handleLogin} className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-center">Sign in to Sonara</h2>
+        {/* eslint-disable-next-line react/no-unescaped-entities */}
         {error && <div className="mb-4 text-red-500 text-center">{error}</div>}
         <input
           type="email"
