@@ -116,13 +116,14 @@ export default function ProfilePage() {
   };
 
   const handleDownload = (trackId: string) => {
-    setDownloading(true);
-    // Simulate download
-    setTimeout(() => {
-      setDownloading(false);
-      alert(`Track downloaded successfully!`);
-    }, 1500);
-  };
+  setDownloading(true);
+  // Simulate download
+  setTimeout(() => {
+    setDownloading(false);
+    // Use trackId in the alert message to fix the error
+    alert(`Track ${trackId} downloaded successfully!`);
+  }, 1500);
+};
 
   const handleSignOut = async () => {
     await signOut(auth);
