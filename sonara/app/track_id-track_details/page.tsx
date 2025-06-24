@@ -27,7 +27,6 @@ import clsx from "clsx";
 import {auth} from "../../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import Link from "next/link";
-import type { Metadata } from "next";
 
 type Theme = "light" | "dark" | "pastel";
 
