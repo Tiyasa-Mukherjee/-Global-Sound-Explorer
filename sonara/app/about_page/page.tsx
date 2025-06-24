@@ -8,10 +8,7 @@ import {
   Music, 
   BookOpen,
   Users,
-  Heart,
-  Award,
   Newspaper,
-  Play,
   Sun,
   Moon,
   Palette
