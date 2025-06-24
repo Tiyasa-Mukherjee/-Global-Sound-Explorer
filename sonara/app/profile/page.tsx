@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import { 
   User, 
   Settings, 
-  Heart, 
   History, 
   Headphones, 
   Album, 
@@ -19,7 +18,8 @@ import {
   Bookmark,
   Moon,
   Sun,
-  Palette
+  Palette,
+  Heart // <-- Added Heart icon
 } from "lucide-react";
 import clsx from "clsx";
 import { auth } from "../../firebase";

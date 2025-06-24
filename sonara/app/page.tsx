@@ -10,7 +10,6 @@ import {
   Headphones, 
   Music, 
   BookOpen, 
-  Heart, 
   Play, 
   ArrowRight, 
   ChevronRight,
@@ -29,7 +28,6 @@ type Feature = {
 
 export default function SonaraLanding() {
   const [theme, setTheme] = useState<Theme>("light");
-  const [isMounted, setIsMounted] = useState(false);
 
   // Theme persistence logic
   useEffect(() => {
