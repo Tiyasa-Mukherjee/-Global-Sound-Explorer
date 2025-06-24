@@ -26,6 +26,7 @@ import { useRouter } from "next/navigation";
 import clsx from "clsx";
 import {auth} from "../../firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import Link from "next/link";
 
 type Theme = "light" | "dark" | "pastel";
 
@@ -192,10 +193,6 @@ export default function TrackPage({ params }: { params: { id: string } }) {
     setIsPlaying(!isPlaying);
   };
 
-  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCurrentTime(parseInt(e.target.value));
-  };
-
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -219,26 +216,26 @@ export default function TrackPage({ params }: { params: { id: string } }) {
       )}
       style={{ backdropFilter: 'blur(8px)', border: '2px solid rgba(255,255,255,0.15)' }}
     >
-      <a href="/" className="flex items-center gap-2 font-bold text-2xl tracking-tight hover:scale-105 transition-transform">
+      <Link href="/" className="flex items-center gap-2 font-bold text-2xl tracking-tight hover:scale-105 transition-transform">
         <span className="inline-block bg-white/20 rounded-full p-2">
           <Music className="w-7 h-7" />
         </span>
         Sonara
-      </a>
+      </Link>
       <div className="flex gap-6 text-lg font-medium">
-        <a href="/explore" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Explore</a>
-        <a href="/library-curated_collections" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Library</a>
-        <a href="/track_id-track_details" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Track ID</a>
-        <a href="/about_page" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">About</a>
-        <a href="/blog" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Blog</a>
+        <Link href="/explore" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Explore</Link>
+        <Link href="/library-curated_collections" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Library</Link>
+        <Link href="/track_id-track_details" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Track ID</Link>
+        <Link href="/about_page" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">About</Link>
+        <Link href="/blog" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Blog</Link>
       </div>
       <div className="flex items-center gap-4">
         <a href="#" className="px-5 py-2 rounded-full font-semibold bg-white/20 hover:bg-white/30 transition-all shadow text-white">Sign In</a>
-        <a href="/profile" className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 transition-all">
+        <Link href="/profile" className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 transition-all">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 19.5a7.5 7.5 0 1115 0v.75a.75.75 0 01-.75.75h-13.5a.75.75 0 01-.75-.75v-.75z" />
           </svg>
-        </a>
+        </Link>
       </div>
     </nav>
   );
@@ -296,7 +293,7 @@ export default function TrackPage({ params }: { params: { id: string } }) {
             "text-rose-700": theme === "pastel",
           }
         )}>
-          The sound you're looking for doesn't exist or has been removed.
+          The sound you&apos;re looking for doesn&apos;t exist or has been removed.
         </p>
         <button
           onClick={handleBack}
@@ -654,7 +651,7 @@ export default function TrackPage({ params }: { params: { id: string } }) {
                     <h3 className="font-bold mb-3">Modern Relevance</h3>
                     <p className="opacity-80">
                       Today, the chant is taught in local schools as part of cultural preservation efforts. 
-                      It's performed during eco-tourism events to raise awareness about rainforest conservation.
+                      It&apos;s performed during eco-tourism events to raise awareness about rainforest conservation.
                     </p>
                   </div>
                 </div>

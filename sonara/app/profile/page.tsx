@@ -19,13 +19,14 @@ import {
   Bookmark,
   Moon,
   Sun,
-  Palette,
-  LogOut
+  Palette
 } from "lucide-react";
 import clsx from "clsx";
 import { auth } from "../../firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import type { User as FirebaseUser } from "firebase/auth";
+import Image from "next/image";
 
 type Theme = "light" | "dark" | "pastel";
 type Language = "en" | "es" | "fr" | "de";
@@ -59,7 +60,7 @@ export default function ProfilePage() {
   const [savedCollections, setSavedCollections] = useState<Collection[]>([]);
   const [history, setHistory] = useState<Track[]>([]);
   const [playingTrack, setPlayingTrack] = useState<string | null>(null);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -230,9 +231,11 @@ export default function ProfilePage() {
                 
                 
                 <div className="flex flex-col items-center text-center mb-6">
-                  <img
+                  <Image
                     src={user?.photoURL || (user?.providerData && user?.providerData[0]?.photoURL) || "/default-profile.png"}
                     alt="Profile"
+                    width={96}
+                    height={96}
                     className="w-24 h-24 rounded-full border-2 border-blue-500 bg-gray-100 object-cover mb-4"
                     referrerPolicy="no-referrer"
                   />
