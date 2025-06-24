@@ -340,7 +340,7 @@ export default function BlogPage() {
                   "text-rose-700": theme === "pastel",
                 }
               )}>
-                Discover the stories behind the world's musical traditions
+                Discover the stories behind the world&apos;s musical traditions
               </p>
             </div>
             
