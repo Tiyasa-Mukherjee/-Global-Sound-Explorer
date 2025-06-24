@@ -2,7 +2,7 @@
 'use client';
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { 
   Search, 
   BookOpen, 
@@ -89,10 +89,38 @@ export default function BlogPage() {
     }, 800);
   }, []);
 
+  // Wrap filterPosts in useCallback to prevent it from changing on every render
+  const filterPosts = useCallback(() => {
+    let result = [...posts];
+    
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(post => 
+        post.title.toLowerCase().includes(query) || 
+        post.excerpt.toLowerCase().includes(query) ||
+        post.author.toLowerCase().includes(query) ||
+        post.tags.some(tag => tag.toLowerCase().includes(query))
+      );
+    }
+    
+    // Apply category filter
+    if (activeCategory !== "All") {
+      result = result.filter(post => post.category === activeCategory);
+    }
+    
+    // Apply tag filter
+    if (activeTag) {
+      result = result.filter(post => post.tags.includes(activeTag));
+    }
+    
+    setFilteredPosts(result);
+  }, [posts, searchQuery, activeCategory, activeTag]);
+
   useEffect(() => {
     document.documentElement.className = theme;
     filterPosts();
-  }, [posts, searchQuery, activeCategory, activeTag, theme]);
+  }, [posts, searchQuery, activeCategory, activeTag, theme, filterPosts]);
 
   const generateBlogPosts = (): BlogPost[] => {
     return [
@@ -189,33 +217,6 @@ export default function BlogPage() {
         featured: true
       }
     ];
-  };
-
-  const filterPosts = () => {
-    let result = [...posts];
-    
-    // Apply search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(post => 
-        post.title.toLowerCase().includes(query) || 
-        post.excerpt.toLowerCase().includes(query) ||
-        post.author.toLowerCase().includes(query) ||
-        post.tags.some(tag => tag.toLowerCase().includes(query))
-      );
-    }
-    
-    // Apply category filter
-    if (activeCategory !== "All") {
-      result = result.filter(post => post.category === activeCategory);
-    }
-    
-    // Apply tag filter
-    if (activeTag) {
-      result = result.filter(post => post.tags.includes(activeTag));
-    }
-    
-    setFilteredPosts(result);
   };
 
   const clearFilters = () => {
