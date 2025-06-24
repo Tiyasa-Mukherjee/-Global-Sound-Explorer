@@ -21,6 +21,7 @@ import clsx from "clsx";
 import {auth} from "../../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 type Theme = "light" | "dark" | "pastel";
 
@@ -52,26 +53,26 @@ const NavBar = ({ theme }: { theme: Theme }) => (
     )}
     style={{ backdropFilter: 'blur(8px)', border: '2px solid rgba(255,255,255,0.15)' }}
   >
-    <a href="/" className="flex items-center gap-2 font-bold text-2xl tracking-tight hover:scale-105 transition-transform">
+    <Link href="/" className="flex items-center gap-2 font-bold text-2xl tracking-tight hover:scale-105 transition-transform">
       <span className="inline-block bg-white/20 rounded-full p-2">
         <Music className="w-7 h-7" />
       </span>
       Sonara
-    </a>
+    </Link>
     <div className="flex gap-6 text-lg font-medium">
-      <a href="/explore" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Explore</a>
-      <a href="/library-curated_collections" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Library</a>
-      <a href="/track_id-track_details" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Track ID</a>
-      <a href="/about_page" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">About</a>
-      <a href="/blog" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Blog</a>
+      <Link href="/explore" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Explore</Link>
+      <Link href="/library-curated_collections" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Library</Link>
+      <Link href="/track_id-track_details" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Track ID</Link>
+      <Link href="/about_page" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">About</Link>
+      <Link href="/blog" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Blog</Link>
     </div>
     <div className="flex items-center gap-4">
       <a href="#" className="px-5 py-2 rounded-full font-semibold bg-white/20 hover:bg-white/30 transition-all shadow text-white">Sign In</a>
-      <a href="/profile" className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 transition-all">
+      <Link href="/profile" className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 transition-all">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 19.5a7.5 7.5 0 1115 0v.75a.75.75 0 01-.75.75h-13.5a.75.75 0 01-.75-.75v-.75z" />
         </svg>
-      </a>
+      </Link>
     </div>
   </nav>
 );
