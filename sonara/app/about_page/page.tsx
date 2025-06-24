@@ -12,7 +12,6 @@ import {
   Award,
   Newspaper,
   Play,
-  ArrowRight,
   Sun,
   Moon,
   Palette
@@ -300,7 +299,7 @@ export default function AboutPage() {
                 }
               )}>
                 <span className="animate-pulse">✨</span>
-                <span>Preserving the World's Sonic Heritage</span>
+                <span>Preserving the World&apos;s Sonic Heritage</span>
               </div>
               
               <h1 className={clsx(
@@ -311,7 +310,7 @@ export default function AboutPage() {
                   "text-rose-900": theme === "pastel",
                 }
               )}>
-                Our Mission: To Save the World's Vanishing Soundscapes
+                Our Mission: To Save the World&apos;s Vanishing Soundscapes
               </h1>
               
               <p className={clsx(
@@ -350,7 +349,7 @@ export default function AboutPage() {
                   "text-rose-700": theme === "pastel",
                 }
               )}>
-                Every 14 days, a language dies. With it, centuries of musical tradition vanish. We're racing against time to preserve humanity's sonic diversity.
+                Every 14 days, a language dies. With it, centuries of musical tradition vanish. We&apos;re racing against time to preserve humanity&apos;s sonic diversity.
               </p>
             </div>
             
@@ -427,7 +426,7 @@ export default function AboutPage() {
                   "text-rose-700": theme === "pastel",
                 }
               )}>
-                Since our founding in 2020, we've documented traditions that might otherwise have been lost to history.
+                Since our founding in 2020, we&apos;ve documented traditions that might otherwise have been lost to history.
               </p>
             </div>
             
@@ -587,7 +586,7 @@ export default function AboutPage() {
                   "text-rose-700": theme === "pastel",
                 }
               )}>
-                Sonara's work has been featured by leading publications and cultural institutions worldwide.
+                Sonara&apos;s work has been featured by leading publications and cultural institutions worldwide.
               </p>
             </div>
             
@@ -617,7 +616,7 @@ export default function AboutPage() {
                       "text-rose-700": theme === "pastel",
                     }
                   )}>
-                    "{mention.quote}"
+                    &quot;{mention.quote}&quot;
                   </p>
                   <div className="text-sm opacity-70">{mention.date}</div>
                 </div>
@@ -641,7 +640,7 @@ export default function AboutPage() {
                 Join Our Mission
               </h2>
               <p className="text-xl max-w-2xl mx-auto mb-10 opacity-90">
-                Help us preserve the world's musical heritage for future generations.
+                Help us preserve the world&apos;s musical heritage for future generations.
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-4">
                 <button className="bg-white px-8 py-4 rounded-xl font-bold transition-all hover:opacity-90">
