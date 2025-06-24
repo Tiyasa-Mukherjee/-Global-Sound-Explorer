@@ -27,6 +27,7 @@ import clsx from "clsx";
 import {auth} from "../../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import Link from "next/link";
+import type { Metadata } from "next";
 
 type Theme = "light" | "dark" | "pastel";
 
@@ -58,7 +59,12 @@ interface Track {
   audioUrl: string;
 }
 
-export default function TrackPage({ params }: { params: { id: string } }) {
+// Define the correct type for Next.js dynamic route page props
+interface TrackPageProps {
+  params: { id: string };
+}
+
+export default function TrackPage({ params }: TrackPageProps) {
   const router = useRouter();
   const [theme, setTheme] = useState<Theme>("light");
   const [track, setTrack] = useState<Track | null>(null);
