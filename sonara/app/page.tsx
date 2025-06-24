@@ -47,7 +47,7 @@ export default function SonaraLanding() {
     try {
       await signInWithPopup(auth, provider);
       window.location.href = "/profile";
-    } catch (error) {
+    } catch {
       alert("Google sign-in failed");
     }
   };
@@ -248,7 +248,7 @@ export default function SonaraLanding() {
                 }
               )}>
                 <span className="animate-pulse">✨</span>
-                <span>Discover the World's Musical Heritage</span>
+                <span>Discover the World&apos;s Musical Heritage</span>
               </div>
               
               <h1 className={clsx(
@@ -270,7 +270,7 @@ export default function SonaraLanding() {
                   "text-rose-700": theme === "pastel",
                 }
               )}>
-                Sonara is your gateway to the world's musical heritage — folk rhythms, ancient chants, indigenous instruments, and vibrant regional sounds.
+                Sonara is your gateway to the world&apos;s musical heritage — folk rhythms, ancient chants, indigenous instruments, and vibrant regional sounds.
               </p>
               
               <div className="flex flex-col sm:flex-row justify-center gap-4">
@@ -606,7 +606,7 @@ export default function SonaraLanding() {
                   "text-rose-700": theme === "pastel",
                 }
               )}>
-                Experience the world's music with a plan that fits your curiosity.
+                Experience the world&apos;s music with a plan that fits your curiosity.
               </p>
             </div>
             

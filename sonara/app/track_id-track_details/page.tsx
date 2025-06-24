@@ -64,7 +64,6 @@ export default function TrackPage({ params }: { params: { id: string } }) {
   const [track, setTrack] = useState<Track | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(80);
-  const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [relatedTracks, setRelatedTracks] = useState<Track[]>([]);
   const [loading, setLoading] = useState(true);
@@ -568,12 +567,12 @@ export default function TrackPage({ params }: { params: { id: string } }) {
                         "bg-rose-500": theme === "pastel",
                       }
                     )}
-                    style={{ width: `${(currentTime / duration) * 100}%` }}
+                    style={{ width: `${(0 / duration) * 100}%` }}
                   ></div>
                 </div>
                 
                 <div className="flex justify-between text-sm opacity-80">
-                  <span>{formatTime(currentTime)}</span>
+                  <span>{formatTime(0)}</span>
                   <span>{track.duration}</span>
                 </div>
               </div>
