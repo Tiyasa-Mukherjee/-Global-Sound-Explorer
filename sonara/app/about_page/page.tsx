@@ -318,7 +318,7 @@ export default function AboutPage() {
                   "text-rose-700": theme === "pastel",
                 }
               )}>
-                Sonara is a global initiative dedicated to preserving, celebrating, and sharing the world's diverse musical heritage before it disappears.
+                Sonara is a global initiative dedicated to preserving, celebrating, and sharing the world&apos;s diverse musical heritage before it disappears.
               </p>
             </div>
           </div>
