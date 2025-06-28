@@ -1,0 +1,12 @@
+<!-- Open source world map SVG from Wikimedia Commons, simplified for interactivity. Each continent/region is a clickable <path> with an id. -->
+<svg id="world-map" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 1001" style="width:100%;height:auto">
+  <g>
+    <path id="north-america" d="M200,200 L400,180 L420,300 L300,400 Z" fill="#b3cde0" stroke="#333" stroke-width="2"/>
+    <path id="south-america" d="M400,600 L500,800 L600,700 L550,600 Z" fill="#fbb4ae" stroke="#333" stroke-width="2"/>
+    <path id="europe" d="M1100,150 L1200,200 L1150,300 L1050,250 Z" fill="#ccebc5" stroke="#333" stroke-width="2"/>
+    <path id="africa" d="M1200,400 L1300,600 L1400,500 L1350,400 Z" fill="#decbe4" stroke="#333" stroke-width="2"/>
+    <path id="asia" d="M1400,200 L1700,300 L1600,500 L1450,400 Z" fill="#fed9a6" stroke="#333" stroke-width="2"/>
+    <path id="oceania" d="M1700,700 L1800,900 L1900,800 L1850,700 Z" fill="#ffffcc" stroke="#333" stroke-width="2"/>
+    <path id="antarctica" d="M800,950 L1200,950 L1100,1000 L900,1000 Z" fill="#d9d9d9" stroke="#333" stroke-width="2"/>
+  </g>
+</svg>

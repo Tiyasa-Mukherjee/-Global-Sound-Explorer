@@ -1,7 +1,7 @@
 // app/explore/page.tsx
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
   Globe, 
   Headphones, 
@@ -50,47 +50,111 @@ interface Region {
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 // --- MOCK DATA FOR DEMO PURPOSES ---
-const regions: Region[] = [
-  {
-    id: "west-africa",
-    name: "West Africa",
-    coordinates: [-20, 10],
-    color: "#f59e42",
-    audioSample: "/audio/west-africa.mp3",
-    description: "Polyrhythmic drumming and call-and-response vocals from Mali, Senegal, and Guinea.",
-    genres: ["Afrobeat", "Highlife", "Griot"],
-    instruments: ["Djembe", "Kora", "Balafon"],
-    languages: ["Bambara", "Wolof", "French"],
-    mood: ["Energetic", "Uplifting"],
-    culture: "Music is central to social life, storytelling, and ceremonies in West Africa."
+const regionMap: Record<string, Region> = {
+  "north-america": {
+    id: "north-america",
+    name: "North America",
+    coordinates: [-100, 40],
+    color: "#b3cde0",
+    audioSample: "/audio/north-america.mp3",
+    description: "Jazz, blues, country, and pop from the US, Canada, and Mexico.",
+    genres: ["Jazz", "Blues", "Country", "Pop"],
+    instruments: ["Guitar", "Banjo", "Saxophone"],
+    languages: ["English", "Spanish", "French"],
+    mood: ["Upbeat", "Soulful"],
+    culture: "Music is a melting pot of influences, from indigenous to immigrant traditions."
   },
-  {
-    id: "andes",
-    name: "Andes",
-    coordinates: [-70, -15],
-    color: "#42a5f5",
-    audioSample: "/audio/andes.mp3",
-    description: "Panpipes, flutes, and folk songs from the Andean mountains.",
-    genres: ["Huayno", "Saya", "Carnavalito"],
-    instruments: ["Panpipes", "Charango", "Bombo"],
-    languages: ["Quechua", "Spanish"],
-    mood: ["Reflective", "Festive"],
-    culture: "Music in the Andes is tied to agricultural cycles and indigenous festivals."
+  "south-america": {
+    id: "south-america",
+    name: "South America",
+    coordinates: [-60, -15],
+    color: "#fbb4ae",
+    audioSample: "/audio/south-america.mp3",
+    description: "Samba, tango, and Andean folk from Brazil, Argentina, Peru, and more.",
+    genres: ["Samba", "Tango", "Huayno"],
+    instruments: ["Panpipes", "Charango", "Guitar"],
+    languages: ["Spanish", "Portuguese", "Quechua"],
+    mood: ["Festive", "Passionate"],
+    culture: "Music is central to festivals, dance, and storytelling."
+  },
+  "europe": {
+    id: "europe",
+    name: "Europe",
+    coordinates: [10, 50],
+    color: "#ccebc5",
+    audioSample: "/audio/europe.mp3",
+    description: "Classical, folk, and electronic music from across the continent.",
+    genres: ["Classical", "Folk", "EDM"],
+    instruments: ["Violin", "Accordion", "Synthesizer"],
+    languages: ["English", "French", "German", "Italian"],
+    mood: ["Elegant", "Lively"],
+    culture: "Rich musical heritage from medieval to modern times."
+  },
+  "africa": {
+    id: "africa",
+    name: "Africa",
+    coordinates: [20, 0],
+    color: "#decbe4",
+    audioSample: "/audio/africa.mp3",
+    description: "Polyrhythmic drumming, Afrobeat, and traditional music from all regions.",
+    genres: ["Afrobeat", "Highlife", "Griot", "Traditional"],
+    instruments: ["Djembe", "Kora", "Balafon"],
+    languages: ["Swahili", "Arabic", "French", "Yoruba"],
+    mood: ["Energetic", "Spiritual"],
+    culture: "Music is woven into daily life, rituals, and celebrations."
+  },
+  "asia": {
+    id: "asia",
+    name: "Asia",
+    coordinates: [100, 40],
+    color: "#fed9a6",
+    audioSample: "/audio/asia.mp3",
+    description: "Traditional, pop, and fusion music from East, South, and Southeast Asia.",
+    genres: ["K-Pop", "Bollywood", "Gamelan", "Folk"],
+    instruments: ["Sitar", "Koto", "Erhu", "Guzheng"],
+    languages: ["Mandarin", "Hindi", "Japanese", "Korean"],
+    mood: ["Melodic", "Dramatic"],
+    culture: "Music is diverse, reflecting ancient and modern influences."
+  },
+  "oceania": {
+    id: "oceania",
+    name: "Oceania",
+    coordinates: [150, -25],
+    color: "#ffffcc",
+    audioSample: "/audio/oceania.mp3",
+    description: "Indigenous, folk, and pop music from Australia, New Zealand, and Pacific Islands.",
+    genres: ["Didgeridoo", "Haka", "Folk", "Pop"],
+    instruments: ["Didgeridoo", "Ukulele", "Guitar"],
+    languages: ["English", "Maori", "Tok Pisin"],
+    mood: ["Earthy", "Joyful"],
+    culture: "Music is tied to land, ancestry, and storytelling."
+  },
+  "antarctica": {
+    id: "antarctica",
+    name: "Antarctica",
+    coordinates: [0, -90],
+    color: "#d9d9d9",
+    audioSample: "/audio/antarctica.mp3",
+    description: "Experimental and ambient music inspired by the icy continent.",
+    genres: ["Ambient", "Experimental"],
+    instruments: ["Synthesizer", "Field Recording"],
+    languages: ["None"],
+    mood: ["Calm", "Mysterious"],
+    culture: "Music here is inspired by nature and scientific exploration."
   }
-  // Add more regions as needed
-];
+};
 
 const allGenres: string[] = [
-  ...Array.from(new Set(regions.flatMap((r: Region) => r.genres)))
+  ...Array.from(new Set(Object.values(regionMap).flatMap((r: Region) => r.genres)))
 ];
 const allInstruments: string[] = [
-  ...Array.from(new Set(regions.flatMap((r: Region) => r.instruments)))
+  ...Array.from(new Set(Object.values(regionMap).flatMap((r: Region) => r.instruments)))
 ];
 const allLanguages: string[] = [
-  ...Array.from(new Set(regions.flatMap((r: Region) => r.languages)))
+  ...Array.from(new Set(Object.values(regionMap).flatMap((r: Region) => r.languages)))
 ];
 const allMoods: string[] = [
-  ...Array.from(new Set(regions.flatMap((r: Region) => r.mood)))
+  ...Array.from(new Set(Object.values(regionMap).flatMap((r: Region) => r.mood)))
 ];
 
 export default function ExplorePage() {
@@ -110,6 +174,7 @@ export default function ExplorePage() {
   const [mobileView, setMobileView] = useState<"map" | "info">("map");
   const [isLargeScreen, setIsLargeScreen] = useState(false);
   const router = useRouter();
+  const svgRef = useRef<SVGSVGElement | null>(null);
 
   // Authentication check
   useEffect(() => {
@@ -173,7 +238,7 @@ export default function ExplorePage() {
     });
   };
 
-  const filteredRegions = regions.filter((region: Region) => {
+  const filteredRegions = Object.values(regionMap).filter((region: Region) => {
     return (
       (filters.genre.length === 0 || filters.genre.some((g: string) => region.genres.includes(g))) &&
       (filters.instrument.length === 0 || filters.instrument.some((i: string) => region.instruments.includes(i))) &&
@@ -190,6 +255,23 @@ export default function ExplorePage() {
   // Example: fetch tracks or regions if you want to make this dynamic
   const { data: tracksData, error: tracksError } = useSWR("/api/tracks", fetcher);
   // You can use tracksData to render dynamic content
+
+  // Add click handler for SVG map
+  useEffect(() => {
+    const svg = document.getElementById("world-map") as SVGSVGElement | null;
+    if (!svg) return;
+    const handleMapClick = (e: MouseEvent) => {
+      const target = e.target as SVGElement;
+      const regionId = target.id;
+      if (regionMap[regionId]) {
+        setSelectedRegion(regionMap[regionId]);
+        setIsPlaying(true);
+        if (window.innerWidth < 1024) setMobileView("info");
+      }
+    };
+    svg.addEventListener("click", handleMapClick);
+    return () => svg.removeEventListener("click", handleMapClick);
+  }, []);
 
   return (
     <>
@@ -264,7 +346,7 @@ export default function ExplorePage() {
                     )}>
                       <h3 className="font-bold mb-2">Regions</h3>
                       <div className="flex flex-wrap gap-2">
-                        {regions.map((region: Region) => (
+                        {Object.values(regionMap).map((region: Region) => (
                           <div key={region.id} className="flex items-center gap-2">
                             <div 
                               className="w-3 h-3 rounded-full" 
