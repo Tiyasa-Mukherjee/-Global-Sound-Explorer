@@ -29,7 +29,7 @@ import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 import ThemeToggle from "../../components/ThemeToggle";
 import LoginButton from "../../components/LoginButton";
 import { useThemeContext } from "../../components/ThemeContext";
-import NavBar from "../../components/NavBar";
+import NavBar from "@/components/NavBar";
 
 type Theme = "light" | "dark" | "pastel";
 
