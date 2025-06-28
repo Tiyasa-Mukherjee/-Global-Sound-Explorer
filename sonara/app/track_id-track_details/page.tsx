@@ -25,8 +25,10 @@ import {
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
 import {auth} from "../../firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import Link from "next/link";
+import useSWR from "swr";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
 type Theme = "light" | "dark" | "pastel";
 
@@ -56,13 +58,17 @@ interface Track {
   instruments: Instrument[];
   tags: string[];
   audioUrl: string;
-  
 }
 
-// Remove unused @ts-expect-error directive
-export default function TrackPage({ params }: { params: { id: string } }) {
+const fetcher = (url: string) => fetch(url).then(res => res.json());
+
+type PageProps = { params: { id: string } };
+
+export default function TrackPage({ params }: PageProps) {
   const router = useRouter();
   const [theme, setTheme] = useState<Theme>("light");
+  const [userId, setUserId] = useState<string | null>(null);
+  const db = typeof window !== "undefined" ? getFirestore() : null;
   const [track, setTrack] = useState<Track | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(80);
@@ -70,125 +76,36 @@ export default function TrackPage({ params }: { params: { id: string } }) {
   const [relatedTracks, setRelatedTracks] = useState<Track[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Theme persistence logic
+  // Fetch all tracks and filter for the current one
+  const { data: tracksData, error: tracksError } = useSWR("/api/tracks", fetcher);
+
   useEffect(() => {
-    const savedTheme = localStorage.getItem("sonara-theme") as Theme | null;
-    if (savedTheme) setTheme(savedTheme);
-  }, []);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user && db) {
+        setUserId(user.uid);
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          if (data.theme) setTheme(data.theme);
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, [db]);
 
   useEffect(() => {
     document.documentElement.className = theme;
-    localStorage.setItem("sonara-theme", theme);
   }, [theme]);
 
   useEffect(() => {
-    // Simulate data loading
-    setTimeout(() => {
-      setTrack({
-        id: params.id,
-        title: "River Dawn Chant",
-        artist: {
-          id: "1",
-          name: "Tribe of the Hummingbird",
-          bio: "An indigenous group preserving Amazonian musical traditions for generations.",
-          region: "Amazon Rainforest, Brazil"
-        },
-        duration: "4:32",
-        location: "Xingu River, Amazonas, Brazil",
-        coordinates: [-3.4653, -62.2159],
-        recordingDate: "June 15, 2023",
-        culturalContext: "This dawn chant is traditionally performed by women at the river's edge as the community awakens. The melody mimics bird calls and flowing water, serving as a daily connection to nature spirits. The chant is believed to bring good fortune for the day's fishing and gathering activities.",
-        instruments: [
-          {
-            id: "1",
-            name: "Berimbau",
-            description: "A single-string percussion instrument made from a wooden bow and gourd resonator."
-          },
-          {
-            id: "2",
-            name: "Teponaztli",
-            description: "A hollow wooden drum played with rubber-tipped mallets."
-          },
-          {
-            id: "3",
-            name: "Quena",
-            description: "Traditional Andean flute made from bamboo or wood."
-          }
-        ],
-        tags: ["Nature", "Ritual", "Dawn", "Amazon", "Indigenous"],
-        audioUrl: "/samples/river-dawn.mp3"
-      });
-      
-      setRelatedTracks([
-        {
-          id: "2",
-          title: "Jaguar Spirit Dance",
-          artist: {
-            id: "2",
-            name: "Amazon Drum Collective",
-            bio: "Traditional percussionists from multiple Amazonian tribes",
-            region: "Amazon Rainforest, Brazil"
-          },
-          duration: "3:45",
-          location: "Manaus, Brazil",
-          coordinates: [-3.1190, -60.0217],
-          recordingDate: "May 22, 2023",
-          culturalContext: "Ceremonial drumming for the jaguar spirit ritual",
-          instruments: [
-            { id: "4", name: "Pandeiro", description: "Brazilian tambourine" },
-            { id: "5", name: "Atabaque", description: "Tall wooden drum" }
-          ],
-          tags: ["Ritual", "Drum", "Ceremonial", "Amazon"],
-          audioUrl: "/samples/jaguar-spirit.mp3"
-        },
-        {
-          id: "3",
-          title: "Canopy Rain Song",
-          artist: {
-            id: "3",
-            name: "Forest Voices",
-            bio: "Vocal ensemble specializing in rainforest soundscapes",
-            region: "Amazon Rainforest, Peru"
-          },
-          duration: "5:21",
-          location: "Iquitos, Peru",
-          coordinates: [-3.7491, -73.2538],
-          recordingDate: "April 10, 2023",
-          culturalContext: "Vocal imitation of rainforest during rainfall",
-          instruments: [
-            { id: "6", name: "Maracas", description: "Percussion shakers" },
-            { id: "7", name: "Rainstick", description: "Instrument mimicking rain sounds" }
-          ],
-          tags: ["Nature", "Rain", "Vocal", "Amazon"],
-          audioUrl: "/samples/canopy-rain.mp3"
-        },
-        {
-          id: "4",
-          title: "Mystic Forest Echoes",
-          artist: {
-            id: "4",
-            name: "Shamanic Sound Group",
-            bio: "Healers using traditional sound techniques",
-            region: "Amazon Rainforest, Colombia"
-          },
-          duration: "6:15",
-          location: "Leticia, Colombia",
-          coordinates: [-4.2150, -69.9381],
-          recordingDate: "July 5, 2023",
-          culturalContext: "Healing ceremony soundscape with plant spirits",
-          instruments: [
-            { id: "8", name: "Ocarina", description: "Ancient vessel flute" },
-            { id: "9", name: "Seed Pod Shakers", description: "Natural percussion instruments" }
-          ],
-          tags: ["Healing", "Ceremonial", "Shamanic", "Amazon"],
-          audioUrl: "/samples/forest-echoes.mp3"
-        }
-      ]);
-      
-      setDuration(272); // 4:32 in seconds
+    if (tracksData && Array.isArray(tracksData)) {
+      const foundTrack = tracksData.find((t: Track) => t.id === params.id);
+      setTrack(foundTrack || null);
+      setRelatedTracks(tracksData.filter((t: Track) => t.id !== params.id).slice(0, 3));
+      setDuration(foundTrack ? 272 : 0); // You may want to use foundTrack.duration in seconds
       setLoading(false);
-    }, 800);
-  }, [params.id]);
+    }
+  }, [tracksData, params.id]);
 
   const togglePlay = () => {
     setIsPlaying(!isPlaying);
@@ -204,42 +121,70 @@ export default function TrackPage({ params }: { params: { id: string } }) {
     router.back();
   };
 
+  const handleThemeChange = async (newTheme: Theme) => {
+    setTheme(newTheme);
+    if (userId && db) {
+      await setDoc(doc(db, "users", userId), { theme: newTheme }, { merge: true });
+    }
+  };
+
   // Sexy NavBar component
-  const NavBar = ({ theme }: { theme: Theme }) => (
-    <nav
-      className={clsx(
-        "w-full flex items-center justify-between px-6 py-3 rounded-2xl shadow-lg mt-4 mb-8 transition-all",
-        {
-          "bg-gradient-to-r from-blue-500 to-indigo-600 text-white": theme === "light",
-          "bg-gradient-to-r from-gray-800 to-indigo-900 text-white": theme === "dark",
-          "bg-gradient-to-r from-rose-500 to-amber-500 text-white": theme === "pastel",
-        }
-      )}
-      style={{ backdropFilter: 'blur(8px)', border: '2px solid rgba(255,255,255,0.15)' }}
-    >
-      <Link href="/" className="flex items-center gap-2 font-bold text-2xl tracking-tight hover:scale-105 transition-transform">
-        <span className="inline-block bg-white/20 rounded-full p-2">
-          <Music className="w-7 h-7" />
-        </span>
-        Sonara
-      </Link>
-      <div className="flex gap-6 text-lg font-medium">
-        <Link href="/explore" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Explore</Link>
-        <Link href="/library-curated_collections" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Library</Link>
-        <Link href="/track_id-track_details" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Track ID</Link>
-        <Link href="/about_page" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">About</Link>
-        <Link href="/blog" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Blog</Link>
-      </div>
-      <div className="flex items-center gap-4">
-        <a href="#" className="px-5 py-2 rounded-full font-semibold bg-white/20 hover:bg-white/30 transition-all shadow text-white">Sign In</a>
-        <Link href="/profile" className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 transition-all">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 19.5a7.5 7.5 0 1115 0v.75a.75.75 0 01-.75.75h-13.5a.75.75 0 01-.75-.75v-.75z" />
-          </svg>
+  const NavBar = ({ theme }: { theme: Theme }) => {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const router = useRouter();
+
+    useEffect(() => {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        setIsAuthenticated(!!user);
+      });
+      return () => unsubscribe();
+    }, []);
+
+    const handleLogout = async () => {
+      await signOut(auth);
+      router.push("/login");
+    };
+
+    return (
+      <nav
+        className={clsx(
+          "w-full flex items-center justify-between px-6 py-3 rounded-2xl shadow-lg mt-4 mb-8 transition-all",
+          {
+            "bg-gradient-to-r from-blue-500 to-indigo-600 text-white": theme === "light",
+            "bg-gradient-to-r from-gray-800 to-indigo-900 text-white": theme === "dark",
+            "bg-gradient-to-r from-rose-500 to-amber-500 text-white": theme === "pastel",
+          }
+        )}
+        style={{ backdropFilter: 'blur(8px)', border: '2px solid rgba(255,255,255,0.15)' }}
+      >
+        <Link href="/" className="flex items-center gap-2 font-bold text-2xl tracking-tight hover:scale-105 transition-transform">
+          <span className="inline-block bg-white/20 rounded-full p-2">
+            <Music className="w-7 h-7" />
+          </span>
+          Sonara
         </Link>
-      </div>
-    </nav>
-  );
+        <div className="flex gap-6 text-lg font-medium">
+          <Link href="/explore" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Explore</Link>
+          <Link href="/library-curated_collections" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Library</Link>
+          <Link href="/track_id-track_details" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Track ID</Link>
+          <Link href="/about_page" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">About</Link>
+          <Link href="/blog" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Blog</Link>
+        </div>
+        <div className="flex items-center gap-4">
+          {isAuthenticated ? (
+            <button onClick={handleLogout} className="px-5 py-2 rounded-full font-semibold bg-white/20 hover:bg-white/30 transition-all shadow text-white">Log Out</button>
+          ) : (
+            <Link href="/login" className="px-5 py-2 rounded-full font-semibold bg-white/20 hover:bg-white/30 transition-all shadow text-white">Sign In</Link>
+          )}
+          <Link href="/profile" className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 19.5a7.5 7.5 0 1115 0v.75a.75.75 0 01-.75.75h-13.5a.75.75 0 01-.75-.75v-.75z" />
+            </svg>
+          </Link>
+        </div>
+      </nav>
+    );
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -345,7 +290,7 @@ export default function TrackPage({ params }: { params: { id: string } }) {
           <div className="flex items-center gap-4">
             <div className="flex gap-2 p-1 rounded-full border">
               <button 
-                onClick={() => setTheme("light")}
+                onClick={() => handleThemeChange("light")}
                 className={clsx(
                   "p-2 rounded-full transition-all",
                   {
@@ -360,7 +305,7 @@ export default function TrackPage({ params }: { params: { id: string } }) {
                 <Sun className="w-4 h-4" />
               </button>
               <button 
-                onClick={() => setTheme("dark")}
+                onClick={() => handleThemeChange("dark")}
                 className={clsx(
                   "p-2 rounded-full transition-all",
                   {
@@ -375,7 +320,7 @@ export default function TrackPage({ params }: { params: { id: string } }) {
                 <Moon className="w-4 h-4" />
               </button>
               <button 
-                onClick={() => setTheme("pastel")}
+                onClick={() => handleThemeChange("pastel")}
                 className={clsx(
                   "p-2 rounded-full transition-all",
                   {

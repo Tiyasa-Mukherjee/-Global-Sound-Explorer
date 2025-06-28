@@ -27,6 +27,8 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import type { User as FirebaseUser } from "firebase/auth";
 import Image from "next/image";
+import useSWR from "swr";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
 type Theme = "light" | "dark" | "pastel";
 type Language = "en" | "es" | "fr" | "de";
@@ -49,8 +51,11 @@ interface Collection {
   region: string;
 }
 
+const fetcher = (url: string) => fetch(url).then(res => res.json());
+
 export default function ProfilePage() {
   const [theme, setTheme] = useState<Theme>("light");
+  const [userId, setUserId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"library" | "history" | "preferences">("library");
   const [audioQuality, setAudioQuality] = useState<AudioQuality>("high");
   const [language, setLanguage] = useState<Language>("en");
@@ -62,50 +67,39 @@ export default function ProfilePage() {
   const [playingTrack, setPlayingTrack] = useState<string | null>(null);
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const router = useRouter();
+  const db = typeof window !== "undefined" ? getFirestore() : null;
+
+  // Remove simulated loading and use SWR for dynamic data
+  const { data: tracksData, error: tracksError } = useSWR("/api/tracks", fetcher);
+  const { data: collectionsData, error: collectionsError } = useSWR("/api/collections", fetcher);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem("sonara-theme") as Theme | null;
-    if (savedTheme) setTheme(savedTheme);
-    
-    // Simulate loading user data
-    setTimeout(() => {
-      setSavedTracks([
-        { id: "1", title: "River Dawn Chant", artist: "Tribe of the Hummingbird", duration: "4:32", region: "Amazon, Brazil", playedAt: "Today, 9:45 AM" },
-        { id: "2", title: "Andean Mountain Melody", artist: "Quechua Musicians", duration: "5:15", region: "Peru", playedAt: "Yesterday, 2:30 PM" },
-        { id: "3", title: "Sami Yoik", artist: "Nils Johansen", duration: "5:07", region: "Norway", playedAt: "Jun 12, 10:20 AM" },
-        { id: "4", title: "Gamelan Dreams", artist: "Bali Ensemble", duration: "6:45", region: "Indonesia", playedAt: "Jun 10, 8:15 PM" }
-      ]);
-      
-      setSavedCollections([
-        { id: "1", title: "Sounds of the Amazon", tracks: 12, duration: "45 min", region: "South America" },
-        { id: "2", title: "Nordic Folk Journeys", tracks: 8, duration: "52 min", region: "Scandinavia" },
-        { id: "3", title: "African Rhythms", tracks: 10, duration: "38 min", region: "West Africa" }
-      ]);
-      
-      setHistory([
-        { id: "5", title: "Desert Oasis", artist: "Camel Caravan Group", duration: "4:22", region: "Morocco", playedAt: "Today, 11:20 AM" },
-        { id: "6", title: "Himalayan Echo", artist: "Shangri-La Project", duration: "3:58", region: "Nepal", playedAt: "Today, 9:15 AM" },
-        { id: "7", title: "Coral Chant", artist: "Polynesian Voices", duration: "3:37", region: "Fiji", playedAt: "Yesterday, 7:45 PM" },
-        { id: "8", title: "Arctic Voices", artist: "Inuit Throat Singers", duration: "4:15", region: "Canada", playedAt: "Jun 20, 4:30 PM" }
-      ]);
-    }, 800);
-  }, []);
-
-  useEffect(() => {
-    document.documentElement.className = theme;
-    localStorage.setItem("sonara-theme", theme);
-  }, [theme]);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (!firebaseUser) {
-        router.push("/login");
-      } else {
-        setUser(firebaseUser);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user && db) {
+        setUserId(user.uid);
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          if (data.theme) setTheme(data.theme);
+        }
       }
     });
     return () => unsubscribe();
-  }, [router]);
+  }, [db]);
+
+  useEffect(() => {
+    document.documentElement.className = theme;
+  }, [theme]);
+
+  useEffect(() => {
+    if (tracksData && Array.isArray(tracksData)) {
+      setSavedTracks(tracksData);
+      setHistory(tracksData.slice(0, 4)); // Example: use first 4 as history
+    }
+    if (collectionsData && Array.isArray(collectionsData)) {
+      setSavedCollections(collectionsData);
+    }
+  }, [tracksData, collectionsData]);
 
   const togglePlay = (trackId: string) => {
     if (playingTrack === trackId) {
@@ -128,6 +122,13 @@ export default function ProfilePage() {
   const handleSignOut = async () => {
     await signOut(auth);
     router.push("/");
+  };
+
+  const handleThemeChange = async (newTheme: Theme) => {
+    setTheme(newTheme);
+    if (userId && db) {
+      await setDoc(doc(db, "users", userId), { theme: newTheme }, { merge: true });
+    }
   };
 
   return (
@@ -167,7 +168,7 @@ export default function ProfilePage() {
           <div className="flex items-center gap-4">
             <div className="flex gap-2 p-1 rounded-full border">
               <button 
-                onClick={() => setTheme("light")}
+                onClick={() => handleThemeChange("light")}
                 className={clsx(
                   "p-2 rounded-full transition-all",
                   {
@@ -182,7 +183,7 @@ export default function ProfilePage() {
                 <Sun className="w-4 h-4" />
               </button>
               <button 
-                onClick={() => setTheme("dark")}
+                onClick={() => handleThemeChange("dark")}
                 className={clsx(
                   "p-2 rounded-full transition-all",
                   {
@@ -197,7 +198,7 @@ export default function ProfilePage() {
                 <Moon className="w-4 h-4" />
               </button>
               <button 
-                onClick={() => setTheme("pastel")}
+                onClick={() => handleThemeChange("pastel")}
                 className={clsx(
                   "p-2 rounded-full transition-all",
                   {
@@ -777,7 +778,7 @@ export default function ProfilePage() {
                           ].map(themeOption => (
                             <button
                               key={themeOption.id}
-                              onClick={() => setTheme(themeOption.id as Theme)}
+                              onClick={() => handleThemeChange(themeOption.id as Theme)}
                               className={clsx(
                                 "flex flex-col items-center justify-center gap-2 p-4 rounded-lg w-full transition-all",
                                 {

@@ -21,9 +21,11 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 import {auth} from "../../firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import useSWR from "swr";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
 type Theme = "light" | "dark" | "pastel";
 
@@ -41,44 +43,113 @@ interface Region {
   culture: string;
 }
 
-const NavBar = ({ theme }: { theme: Theme }) => (
-  <nav
-    className={clsx(
-      "w-full flex items-center justify-between px-6 py-3 rounded-2xl shadow-lg mt-4 mb-8 transition-all",
-      {
-        "bg-gradient-to-r from-blue-500 to-indigo-600 text-white": theme === "light",
-        "bg-gradient-to-r from-gray-800 to-indigo-900 text-white": theme === "dark",
-        "bg-gradient-to-r from-rose-500 to-amber-500 text-white": theme === "pastel",
-      }
-    )}
-    style={{ backdropFilter: 'blur(8px)', border: '2px solid rgba(255,255,255,0.15)' }}
-  >
-    <Link href="/" className="flex items-center gap-2 font-bold text-2xl tracking-tight hover:scale-105 transition-transform">
-      <span className="inline-block bg-white/20 rounded-full p-2">
-        <Music className="w-7 h-7" />
-      </span>
-      Sonara
-    </Link>
-    <div className="flex gap-6 text-lg font-medium">
-      <Link href="/explore" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Explore</Link>
-      <Link href="/library-curated_collections" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Library</Link>
-      <Link href="/track_id-track_details" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Track ID</Link>
-      <Link href="/about_page" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">About</Link>
-      <Link href="/blog" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Blog</Link>
-    </div>
-    <div className="flex items-center gap-4">
-      <a href="#" className="px-5 py-2 rounded-full font-semibold bg-white/20 hover:bg-white/30 transition-all shadow text-white">Sign In</a>
-      <Link href="/profile" className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 transition-all">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 19.5a7.5 7.5 0 1115 0v.75a.75.75 0 01-.75.75h-13.5a.75.75 0 01-.75-.75v-.75z" />
-        </svg>
+const NavBar = ({ theme }: { theme: Theme }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsAuthenticated(!!user);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push("/login");
+  };
+
+  return (
+    <nav
+      className={clsx(
+        "w-full flex items-center justify-between px-6 py-3 rounded-2xl shadow-lg mt-4 mb-8 transition-all",
+        {
+          "bg-gradient-to-r from-blue-500 to-indigo-600 text-white": theme === "light",
+          "bg-gradient-to-r from-gray-800 to-indigo-900 text-white": theme === "dark",
+          "bg-gradient-to-r from-rose-500 to-amber-500 text-white": theme === "pastel",
+        }
+      )}
+      style={{ backdropFilter: 'blur(8px)', border: '2px solid rgba(255,255,255,0.15)' }}
+    >
+      <Link href="/" className="flex items-center gap-2 font-bold text-2xl tracking-tight hover:scale-105 transition-transform">
+        <span className="inline-block bg-white/20 rounded-full p-2">
+          <Music className="w-7 h-7" />
+        </span>
+        Sonara
       </Link>
-    </div>
-  </nav>
-);
+      <div className="flex gap-6 text-lg font-medium">
+        <Link href="/explore" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Explore</Link>
+        <Link href="/library-curated_collections" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Library</Link>
+        <Link href="/track_id-track_details" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Track ID</Link>
+        <Link href="/about_page" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">About</Link>
+        <Link href="/blog" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Blog</Link>
+      </div>
+      <div className="flex items-center gap-4">
+        {isAuthenticated ? (
+          <button onClick={handleLogout} className="px-5 py-2 rounded-full font-semibold bg-white/20 hover:bg-white/30 transition-all shadow text-white">Log Out</button>
+        ) : (
+          <Link href="/login" className="px-5 py-2 rounded-full font-semibold bg-white/20 hover:bg-white/30 transition-all shadow text-white">Sign In</Link>
+        )}
+        <Link href="/profile" className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 transition-all">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 19.5a7.5 7.5 0 1115 0v.75a.75.75 0 01-.75.75h-13.5a.75.75 0 01-.75-.75v-.75z" />
+          </svg>
+        </Link>
+      </div>
+    </nav>
+  );
+};
+
+const fetcher = (url: string) => fetch(url).then(res => res.json());
+
+// --- MOCK DATA FOR DEMO PURPOSES ---
+const regions: Region[] = [
+  {
+    id: "west-africa",
+    name: "West Africa",
+    coordinates: [-20, 10],
+    color: "#f59e42",
+    audioSample: "/audio/west-africa.mp3",
+    description: "Polyrhythmic drumming and call-and-response vocals from Mali, Senegal, and Guinea.",
+    genres: ["Afrobeat", "Highlife", "Griot"],
+    instruments: ["Djembe", "Kora", "Balafon"],
+    languages: ["Bambara", "Wolof", "French"],
+    mood: ["Energetic", "Uplifting"],
+    culture: "Music is central to social life, storytelling, and ceremonies in West Africa."
+  },
+  {
+    id: "andes",
+    name: "Andes",
+    coordinates: [-70, -15],
+    color: "#42a5f5",
+    audioSample: "/audio/andes.mp3",
+    description: "Panpipes, flutes, and folk songs from the Andean mountains.",
+    genres: ["Huayno", "Saya", "Carnavalito"],
+    instruments: ["Panpipes", "Charango", "Bombo"],
+    languages: ["Quechua", "Spanish"],
+    mood: ["Reflective", "Festive"],
+    culture: "Music in the Andes is tied to agricultural cycles and indigenous festivals."
+  }
+  // Add more regions as needed
+];
+
+const allGenres: string[] = [
+  ...Array.from(new Set(regions.flatMap((r: Region) => r.genres)))
+];
+const allInstruments: string[] = [
+  ...Array.from(new Set(regions.flatMap((r: Region) => r.instruments)))
+];
+const allLanguages: string[] = [
+  ...Array.from(new Set(regions.flatMap((r: Region) => r.languages)))
+];
+const allMoods: string[] = [
+  ...Array.from(new Set(regions.flatMap((r: Region) => r.mood)))
+];
 
 export default function ExplorePage() {
   const [theme, setTheme] = useState<Theme>("light");
+  const [userId, setUserId] = useState<string | null>(null);
+  const db = typeof window !== "undefined" ? getFirestore() : null;
   const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(80);
@@ -95,16 +166,35 @@ export default function ExplorePage() {
 
   // Theme persistence logic
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const savedTheme = window.localStorage.getItem("sonara-theme") as Theme | null;
+    const savedTheme = localStorage.getItem("sonara-theme") as Theme | null;
     if (savedTheme) setTheme(savedTheme);
   }, []);
 
+  // Authentication check
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user && db) {
+        setUserId(user.uid);
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          if (data.theme) setTheme(data.theme);
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, [db]);
+
+  useEffect(() => {
     document.documentElement.className = theme;
-    window.localStorage.setItem("sonara-theme", theme);
   }, [theme]);
+
+  const handleThemeChange = async (newTheme: Theme) => {
+    setTheme(newTheme);
+    if (userId && db) {
+      await setDoc(doc(db, "users", userId), { theme: newTheme }, { merge: true });
+    }
+  };
 
   // Screen size listener
   useEffect(() => {
@@ -114,90 +204,6 @@ export default function ExplorePage() {
     window.addEventListener("resize", checkScreen);
     return () => window.removeEventListener("resize", checkScreen);
   }, []);
-
-  // Authentication check
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (!firebaseUser) {
-        router.push("/login");
-      }
-    });
-    return () => unsubscribe();
-  }, [router]);
-
-  // Sample data for regions
-  const regions: Region[] = [
-    {
-      id: "west-africa",
-      name: "West Africa",
-      coordinates: [-1, 13],
-      color: "#f59e0b",
-      audioSample: "/samples/west-africa.mp3",
-      description: "Home to complex polyrhythms and the talking drum. Features the kora, balafon, and djembe.",
-      genres: ["Afrobeat", "Highlife", "Mbalax", "Jùjú"],
-      instruments: ["Djembe", "Kora", "Talking Drum", "Balafon"],
-      languages: ["Yoruba", "Hausa", "Fula", "Mandinka"],
-      mood: ["Energetic", "Ceremonial", "Complex", "Danceable"],
-      culture: "Music is deeply integrated into daily life, from storytelling to ceremonies. Griots preserve oral history through song."
-    },
-    {
-      id: "andean",
-      name: "Andean Region",
-      coordinates: [-72, -13],
-      color: "#10b981",
-      audioSample: "/samples/andean.mp3",
-      description: "Haunting melodies of the Andes mountains featuring panpipes and charango.",
-      genres: ["Huayno", "Sikuri", "Yaraví", "Cueca"],
-      instruments: ["Siku", "Charango", "Quena", "Bombo"],
-      languages: ["Quechua", "Aymara", "Spanish"],
-      mood: ["Melancholic", "Elevating", "Traditional", "Spiritual"],
-      culture: "Music connects to the mountains and earth. Used in agricultural rituals and festivals like Inti Raymi."
-    },
-    {
-      id: "balkans",
-      name: "Balkans",
-      coordinates: [21, 44],
-      color: "#ef4444",
-      audioSample: "/samples/balkans.mp3",
-      description: "Complex rhythms and passionate melodies with influences from Ottoman, Slavic, and Romani traditions.",
-      genres: ["Čoček", "Sevdalinka", "Tallava", "Balkan Brass"],
-      instruments: ["Gusle", "Tamburica", "Gajda", "Tapan"],
-      languages: ["Serbian", "Romani", "Albanian", "Bulgarian"],
-      mood: ["Passionate", "Rhythmic", "Celebratory", "Expressive"],
-      culture: "Music reflects turbulent history with themes of love and loss. Brass bands are central to celebrations."
-    },
-    {
-      id: "indonesia",
-      name: "Indonesia",
-      coordinates: [118, -2],
-      color: "#8b5cf6",
-      audioSample: "/samples/gamelan.mp3",
-      description: "Gamelan orchestras with metallic percussion and intricate interlocking patterns.",
-      genres: ["Gamelan", "Keroncong", "Dangdut", "Jaipongan"],
-      instruments: ["Gong", "Bonang", "Saron", "Gender", "Suling"],
-      languages: ["Javanese", "Balinese", "Sundanese", "Indonesian"],
-      mood: ["Hypnotic", "Ceremonial", "Meditative", "Complex"],
-      culture: "Music accompanies rituals and dance. Balinese gamelan is dynamic while Javanese is more meditative."
-    },
-    {
-      id: "caucasus",
-      name: "Caucasus",
-      coordinates: [44, 42],
-      color: "#0ea5e9",
-      audioSample: "/samples/caucasus.mp3",
-      description: "Ancient polyphonic singing traditions with unique vocal techniques.",
-      genres: ["Polyphonic Singing", "Mugham", "Ashig", "Lezginka"],
-      instruments: ["Duduk", "Tar", "Kamancha", "Doli"],
-      languages: ["Georgian", "Armenian", "Azeri", "Circassian"],
-      mood: ["Ancient", "Harmonic", "Soulful", "Traditional"],
-      culture: "Svaneti polyphony dates back 1000+ years. Music preserves endangered languages and traditions."
-    }
-  ];
-
-  const allGenres = Array.from(new Set(regions.flatMap(r => r.genres)));
-  const allInstruments = Array.from(new Set(regions.flatMap(r => r.instruments)));
-  const allLanguages = Array.from(new Set(regions.flatMap(r => r.languages)));
-  const allMoods = Array.from(new Set(regions.flatMap(r => r.mood)));
 
   const toggleFilter = (category: keyof typeof filters, value: string) => {
     setFilters(prev => {
@@ -226,12 +232,12 @@ export default function ExplorePage() {
     });
   };
 
-  const filteredRegions = regions.filter(region => {
+  const filteredRegions = regions.filter((region: Region) => {
     return (
-      (filters.genre.length === 0 || filters.genre.some(g => region.genres.includes(g))) &&
-      (filters.instrument.length === 0 || filters.instrument.some(i => region.instruments.includes(i))) &&
-      (filters.language.length === 0 || filters.language.some(l => region.languages.includes(l))) &&
-      (filters.mood.length === 0 || filters.mood.some(m => region.mood.includes(m)))
+      (filters.genre.length === 0 || filters.genre.some((g: string) => region.genres.includes(g))) &&
+      (filters.instrument.length === 0 || filters.instrument.some((i: string) => region.instruments.includes(i))) &&
+      (filters.language.length === 0 || filters.language.some((l: string) => region.languages.includes(l))) &&
+      (filters.mood.length === 0 || filters.mood.some((m: string) => region.mood.includes(m)))
     );
   });
 
@@ -239,6 +245,10 @@ export default function ExplorePage() {
     setIsPlaying(!isPlaying);
     // In a real app, this would control audio playback
   };
+
+  // Example: fetch tracks or regions if you want to make this dynamic
+  const { data: tracksData, error: tracksError } = useSWR("/api/tracks", fetcher);
+  // You can use tracksData to render dynamic content
 
   return (
     <div className={clsx(
@@ -278,7 +288,7 @@ export default function ExplorePage() {
           <div className="flex items-center gap-4">
             <div className="flex gap-2 p-1 rounded-full border">
               <button 
-                onClick={() => setTheme("light")}
+                onClick={() => handleThemeChange("light")}
                 className={clsx(
                   "p-2 rounded-full transition-all",
                   {
@@ -293,7 +303,7 @@ export default function ExplorePage() {
                 <Sun className="w-4 h-4" />
               </button>
               <button 
-                onClick={() => setTheme("dark")}
+                onClick={() => handleThemeChange("dark")}
                 className={clsx(
                   "p-2 rounded-full transition-all",
                   {
@@ -308,7 +318,7 @@ export default function ExplorePage() {
                 <Moon className="w-4 h-4" />
               </button>
               <button 
-                onClick={() => setTheme("pastel")}
+                onClick={() => handleThemeChange("pastel")}
                 className={clsx(
                   "p-2 rounded-full transition-all",
                   {
@@ -348,7 +358,7 @@ export default function ExplorePage() {
                   <div className="absolute inset-0 bg-[url('/world-map.svg')] bg-contain bg-center bg-no-repeat opacity-30"></div>
                   
                   {/* Region markers */}
-                  {filteredRegions.map(region => (
+                  {filteredRegions.map((region: Region) => (
                     <button
                       key={region.id}
                       className={clsx(
@@ -389,7 +399,7 @@ export default function ExplorePage() {
                   )}>
                     <h3 className="font-bold mb-2">Regions</h3>
                     <div className="flex flex-wrap gap-2">
-                      {regions.map(region => (
+                      {regions.map((region: Region) => (
                         <div key={region.id} className="flex items-center gap-2">
                           <div 
                             className="w-3 h-3 rounded-full" 
@@ -576,7 +586,7 @@ export default function ExplorePage() {
                         <Music className="w-4 h-4" /> Genres
                       </h4>
                       <div className="flex flex-wrap gap-2">
-                        {selectedRegion.genres.map(genre => (
+                        {selectedRegion.genres.map((genre: string) => (
                           <span 
                             key={genre}
                             className={clsx(
@@ -599,7 +609,7 @@ export default function ExplorePage() {
                         <Headphones className="w-4 h-4" /> Instruments
                       </h4>
                       <div className="flex flex-wrap gap-2">
-                        {selectedRegion.instruments.map(instrument => (
+                        {selectedRegion.instruments.map((instrument: string) => (
                           <span 
                             key={instrument}
                             className={clsx(
@@ -622,7 +632,7 @@ export default function ExplorePage() {
                         <Mic2 className="w-4 h-4" /> Languages
                       </h4>
                       <div className="flex flex-wrap gap-2">
-                        {selectedRegion.languages.map(language => (
+                        {selectedRegion.languages.map((language: string) => (
                           <span 
                             key={language}
                             className={clsx(
@@ -644,7 +654,7 @@ export default function ExplorePage() {
                         <Smile className="w-4 h-4" /> Mood
                       </h4>
                       <div className="flex flex-wrap gap-2">
-                        {selectedRegion.mood.map(m => (
+                        {selectedRegion.mood.map((m: string) => (
                           <span 
                             key={m}
                             className={clsx(
@@ -711,7 +721,7 @@ export default function ExplorePage() {
                         )}
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        {allGenres.map(genre => (
+                        {allGenres.map((genre: string) => (
                           <button
                             key={genre}
                             onClick={() => toggleFilter("genre", genre)}
@@ -748,7 +758,7 @@ export default function ExplorePage() {
                         )}
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        {allInstruments.map(instrument => (
+                        {allInstruments.map((instrument: string) => (
                           <button
                             key={instrument}
                             onClick={() => toggleFilter("instrument", instrument)}
@@ -785,7 +795,7 @@ export default function ExplorePage() {
                         )}
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        {allLanguages.map(language => (
+                        {allLanguages.map((language: string) => (
                           <button
                             key={language}
                             onClick={() => toggleFilter("language", language)}
@@ -821,7 +831,7 @@ export default function ExplorePage() {
                         )}
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        {allMoods.map(mood => (
+                        {allMoods.map((mood: string) => (
                           <button
                             key={mood}
                             onClick={() => toggleFilter("mood", mood)}

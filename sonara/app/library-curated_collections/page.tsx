@@ -24,9 +24,11 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 import {auth} from "../../firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import useSWR from "swr";
 
 type Theme = "light" | "dark" | "pastel";
 
@@ -51,8 +53,11 @@ interface Collection {
   coverColor: string;
 }
 
+const fetcher = (url: string) => fetch(url).then(res => res.json());
+
 export default function LibraryPage() {
   const [theme, setTheme] = useState<Theme>("light");
+  const [userId, setUserId] = useState<string | null>(null);
   const [collections, setCollections] = useState<Collection[]>([]);
   const [filteredCollections, setFilteredCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,6 +74,9 @@ export default function LibraryPage() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const router = useRouter();
+  const db = typeof window !== "undefined" ? getFirestore() : null;
+
+  const { data: collectionsData, error: collectionsError } = useSWR("/api/collections", fetcher);
 
   // Theme persistence logic
   useEffect(() => {
@@ -82,12 +90,12 @@ export default function LibraryPage() {
   }, [theme]);
 
   useEffect(() => {
-    // Simulate loading data
-    setTimeout(() => {
-      setCollections(generateCollections());
+    if (collectionsData && Array.isArray(collectionsData)) {
+      setCollections(collectionsData);
+      setFilteredCollections(collectionsData); // You may want to apply filters here
       setLoading(false);
-    }, 800);
-  }, []);
+    }
+  }, [collectionsData]);
 
   useEffect(() => {
     filterAndSortCollections();
@@ -100,13 +108,18 @@ export default function LibraryPage() {
   }, [page]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (!firebaseUser) {
-        router.push("/login");
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user && db) {
+        setUserId(user.uid);
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          if (data.theme) setTheme(data.theme);
+        }
       }
     });
     return () => unsubscribe();
-  }, [router]);
+  }, [db]);
 
   const generateCollections = (): Collection[] => {
     return [
@@ -363,41 +376,69 @@ export default function LibraryPage() {
     return Array.from(new Set(collections.map(c => c[key] as string)));
   };
 
-  const NavBar = ({ theme }: { theme: Theme }) => (
-    <nav
-      className={clsx(
-        "w-full flex items-center justify-between px-6 py-3 rounded-2xl shadow-lg mt-4 mb-8 transition-all",
-        {
-          "bg-gradient-to-r from-blue-500 to-indigo-600 text-white": theme === "light",
-          "bg-gradient-to-r from-gray-800 to-indigo-900 text-white": theme === "dark",
-          "bg-gradient-to-r from-rose-500 to-amber-500 text-white": theme === "pastel",
-        }
-      )}
-      style={{ backdropFilter: 'blur(8px)', border: '2px solid rgba(255,255,255,0.15)' }}
-    >
-      <Link href="/" className="flex items-center gap-2 font-bold text-2xl tracking-tight hover:scale-105 transition-transform">
-        <span className="inline-block bg-white/20 rounded-full p-2">
-          <Music className="w-7 h-7" />
-        </span>
-        Sonara
-      </Link>
-      <div className="flex gap-6 text-lg font-medium">
-        <Link href="/explore" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Explore</Link>
-        <Link href="/library-curated_collections" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Library</Link>
-        <Link href="/track_id-track_details" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Track ID</Link>
-        <Link href="/about_page" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">About</Link>
-        <Link href="/blog" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Blog</Link>
-      </div>
-      <div className="flex items-center gap-4">
-        <Link href="#" className="px-5 py-2 rounded-full font-semibold bg-white/20 hover:bg-white/30 transition-all shadow text-white">Sign In</Link>
-        <Link href="/profile" className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 transition-all">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 19.5a7.5 7.5 0 1115 0v.75a.75.75 0 01-.75.75h-13.5a.75.75 0 01-.75-.75v-.75z" />
-          </svg>
+  const NavBar = ({ theme }: { theme: Theme }) => {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const router = useRouter();
+
+    useEffect(() => {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        setIsAuthenticated(!!user);
+      });
+      return () => unsubscribe();
+    }, []);
+
+    const handleLogout = async () => {
+      await signOut(auth);
+      router.push("/login");
+    };
+
+    return (
+      <nav
+        className={clsx(
+          "w-full flex items-center justify-between px-6 py-3 rounded-2xl shadow-lg mt-4 mb-8 transition-all",
+          {
+            "bg-gradient-to-r from-blue-500 to-indigo-600 text-white": theme === "light",
+            "bg-gradient-to-r from-gray-800 to-indigo-900 text-white": theme === "dark",
+            "bg-gradient-to-r from-rose-500 to-amber-500 text-white": theme === "pastel",
+          }
+        )}
+        style={{ backdropFilter: 'blur(8px)', border: '2px solid rgba(255,255,255,0.15)' }}
+      >
+        <Link href="/" className="flex items-center gap-2 font-bold text-2xl tracking-tight hover:scale-105 transition-transform">
+          <span className="inline-block bg-white/20 rounded-full p-2">
+            <Music className="w-7 h-7" />
+          </span>
+          Sonara
         </Link>
-      </div>
-    </nav>
-  );
+        <div className="flex gap-6 text-lg font-medium">
+          <Link href="/explore" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Explore</Link>
+          <Link href="/library-curated_collections" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Library</Link>
+          <Link href="/track_id-track_details" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Track ID</Link>
+          <Link href="/about_page" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">About</Link>
+          <Link href="/blog" className="hover:underline underline-offset-8 decoration-2 decoration-white/60 transition-all">Blog</Link>
+        </div>
+        <div className="flex items-center gap-4">
+          {isAuthenticated ? (
+            <button onClick={handleLogout} className="px-5 py-2 rounded-full font-semibold bg-white/20 hover:bg-white/30 transition-all shadow text-white">Log Out</button>
+          ) : (
+            <Link href="/login" className="px-5 py-2 rounded-full font-semibold bg-white/20 hover:bg-white/30 transition-all shadow text-white">Sign In</Link>
+          )}
+          <Link href="/profile" className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 19.5a7.5 7.5 0 1115 0v.75a.75.75 0 01-.75.75h-13.5a.75.75 0 01-.75-.75v-.75z" />
+            </svg>
+          </Link>
+        </div>
+      </nav>
+    );
+  };
+
+  const handleThemeChange = async (newTheme: Theme) => {
+    setTheme(newTheme);
+    if (userId && db) {
+      await setDoc(doc(db, "users", userId), { theme: newTheme }, { merge: true });
+    }
+  };
 
   return (
     <div className={clsx(
@@ -437,7 +478,7 @@ export default function LibraryPage() {
           <div className="flex items-center gap-4">
             <div className="flex gap-2 p-1 rounded-full border">
               <button 
-                onClick={() => setTheme("light")}
+                onClick={() => handleThemeChange("light")}
                 className={clsx(
                   "p-2 rounded-full transition-all",
                   {
@@ -452,7 +493,7 @@ export default function LibraryPage() {
                 <Sun className="w-4 h-4" />
               </button>
               <button 
-                onClick={() => setTheme("dark")}
+                onClick={() => handleThemeChange("dark")}
                 className={clsx(
                   "p-2 rounded-full transition-all",
                   {
@@ -467,7 +508,7 @@ export default function LibraryPage() {
                 <Moon className="w-4 h-4" />
               </button>
               <button 
-                onClick={() => setTheme("pastel")}
+                onClick={() => handleThemeChange("pastel")}
                 className={clsx(
                   "p-2 rounded-full transition-all",
                   {

@@ -1,5 +1,7 @@
 {
   "dependencies": {
-    "firebase": "^11.9.1"
+    "firebase": "^11.9.1",
+    "mongodb": "^6.17.0",
+    "swr": "^2.3.3"
   }
 }
