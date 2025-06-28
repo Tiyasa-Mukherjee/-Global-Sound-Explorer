@@ -69,18 +69,19 @@ export default function ProfilePage() {
   const [savedCollections, setSavedCollections] = useState<Collection[]>([]);
   const [history, setHistory] = useState<Track[]>([]);
   const [playingTrack, setPlayingTrack] = useState<string | null>(null);
-  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [user, setUser] = useState<FirebaseUser | null>(null); // <-- Added user state
   const router = useRouter();
   const db = typeof window !== "undefined" ? getFirestore() : null;
 
   // Remove simulated loading and use SWR for dynamic data
-  const { data: tracksData, error: tracksError } = useSWR("/api/tracks", fetcher);
-  const { data: collectionsData, error: collectionsError } = useSWR("/api/collections", fetcher);
+  const { data: tracksData } = useSWR("/api/tracks", fetcher);
+  const { data: collectionsData } = useSWR("/api/collections", fetcher);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user && db) {
         setUserId(user.uid);
+        setUser(user); // <-- set user for profile display
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
           const data = userDoc.data();
@@ -89,7 +90,7 @@ export default function ProfilePage() {
       }
     });
     return () => unsubscribe();
-  }, [db]);
+  }, [db, setTheme]);
 
   useEffect(() => {
     document.documentElement.className = theme;

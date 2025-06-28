@@ -4,56 +4,17 @@
 import { useState, useEffect } from "react";
 import { 
   Filter, 
-  ArrowDownWideNarrow, 
   Play, 
   Pause,
-  Clock,
-  Disc,
-  Music,
-  Album,
-  History,
-  Star,
   Loader,
-  Search,
-  Sun,
-  Moon,
-  Palette,
-  X,
-  Globe,
+  Music,
   ChevronRight
 } from "lucide-react";
 import clsx from "clsx";
-import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import useSWR from "swr";
-import ThemeToggle from "../../components/ThemeToggle";
-import LoginButton from "../../components/LoginButton";
+import Link from "next/link";
 import { useThemeContext } from "../../components/ThemeContext";
 import NavBar from "../../components/NavBar";
-
-type Theme = "light" | "dark" | "pastel";
-
-interface Track {
-  id: string;
-  title: string;
-  artist: string;
-  duration: string;
-}
-
-interface Collection {
-  id: string;
-  title: string;
-  description: string;
-  tracks: Track[];
-  duration: string;
-  theme: string;
-  era: string;
-  region: string;
-  curator: string;
-  curatorPick: boolean;
-  coverColor: string;
-}
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
@@ -63,7 +24,6 @@ export default function LibraryPage() {
   const [filteredCollections, setFilteredCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState("popular");
   const [filters, setFilters] = useState({
     theme: [] as string[],
     era: [] as string[],
@@ -74,10 +34,8 @@ export default function LibraryPage() {
   const [playingCollection, setPlayingCollection] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const router = useRouter();
-  const db = typeof window !== "undefined" ? getFirestore() : null;
 
-  const { data: collectionsData, error: collectionsError } = useSWR("/api/collections", fetcher);
+  const { data: collectionsData } = useSWR("/api/collections", fetcher);
 
   useEffect(() => {
     if (collectionsData && Array.isArray(collectionsData)) {
@@ -90,153 +48,12 @@ export default function LibraryPage() {
   useEffect(() => {
     filterAndSortCollections();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [collections, filters, sortBy, theme]);
+  }, [collections, filters, theme]);
 
   useEffect(() => {
     filterAndSortCollections();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
-
-  const generateCollections = (): Collection[] => {
-    return [
-      {
-        id: "amazon",
-        title: "Sounds of the Amazon",
-        description: "Indigenous music and rainforest soundscapes from the Amazon basin",
-        tracks: [
-          { id: "1", title: "River Dawn", artist: "Tribe of the Hummingbird", duration: "4:32" },
-          { id: "2", title: "Jaguar Spirit", artist: "Amazon Drum Collective", duration: "3:45" },
-          { id: "3", title: "Canopy Rain", artist: "Forest Voices", duration: "5:21" }
-        ],
-        duration: "45 min",
-        theme: "Nature",
-        era: "Traditional",
-        region: "South America",
-        curator: "Dr. Elena Silva",
-        curatorPick: true,
-        coverColor: "#10b981"
-      },
-      {
-        id: "nordic-folk",
-        title: "Nordic Folk Journeys",
-        description: "Haunting melodies and folk traditions from Scandinavia",
-        tracks: [
-          { id: "1", title: "Fjord Echoes", artist: "Sven Olafsson", duration: "3:52" },
-          { id: "2", title: "Northern Lights Waltz", artist: "Huldra Ensemble", duration: "4:18" },
-          { id: "3", title: "Sami Yoik", artist: "Nils Johansen", duration: "5:07" }
-        ],
-        duration: "52 min",
-        theme: "Folk",
-        era: "Traditional",
-        region: "Europe",
-        curator: "Bjorn Andersson",
-        curatorPick: true,
-        coverColor: "#0ea5e9"
-      },
-      {
-        id: "asian-fusion",
-        title: "Asian Fusion Explorations",
-        description: "Modern interpretations of traditional Asian instruments",
-        tracks: [
-          { id: "1", title: "Tokyo Rain", artist: "Koto Dreams", duration: "4:15" },
-          { id: "2", title: "Himalayan Echo", artist: "Shangri-La Project", duration: "3:58" },
-          { id: "3", title: "Gamelan Futurism", artist: "Bali 3000", duration: "5:32" }
-        ],
-        duration: "38 min",
-        theme: "Fusion",
-        era: "Contemporary",
-        region: "Asia",
-        curator: "Li Wei",
-        curatorPick: true,
-        coverColor: "#8b5cf6"
-      },
-      {
-        id: "silk-road",
-        title: "Silk Road Caravans",
-        description: "Musical traditions along the ancient trade routes",
-        tracks: [
-          { id: "1", title: "Samarkand Bazaar", artist: "Uzbek Ensemble", duration: "3:45" },
-          { id: "2", title: "Desert Oasis", artist: "Camel Caravan Group", duration: "4:22" },
-          { id: "3", title: "Persian Night", artist: "Tehran Collective", duration: "5:11" }
-        ],
-        duration: "42 min",
-        theme: "Historical",
-        era: "Traditional",
-        region: "Central Asia",
-        curator: "Dr. Amir Khan",
-        curatorPick: false,
-        coverColor: "#f59e0b"
-      },
-      {
-        id: "afro-futurism",
-        title: "Afro-Futurism Odyssey",
-        description: "African rhythms meet electronic soundscapes",
-        tracks: [
-          { id: "1", title: "Djembe Code", artist: "Digital Griots", duration: "4:08" },
-          { id: "2", title: "Sahara Synth", artist: "Nomad Tech", duration: "3:51" },
-          { id: "3", title: "Kora Waves", artist: "West Electric", duration: "5:19" }
-        ],
-        duration: "48 min",
-        theme: "Fusion",
-        era: "Contemporary",
-        region: "Africa",
-        curator: "Kwame Johnson",
-        curatorPick: true,
-        coverColor: "#ef4444"
-      },
-      {
-        id: "oceanic",
-        title: "Oceanic Harmonies",
-        description: "Music from Pacific islands and coastal communities",
-        tracks: [
-          { id: "1", title: "Coral Chant", artist: "Polynesian Voices", duration: "3:37" },
-          { id: "2", title: "Tide Drums", artist: "Melanesian Drummers", duration: "4:25" },
-          { id: "3", title: "Wave Song", artist: "Island Echo", duration: "4:52" }
-        ],
-        duration: "41 min",
-        theme: "Nature",
-        era: "Traditional",
-        region: "Oceania",
-        curator: "Malia Chen",
-        curatorPick: false,
-        coverColor: "#06b6d4"
-      },
-      {
-        id: "arctic",
-        title: "Arctic Echoes",
-        description: "Traditional songs from the far northern communities",
-        tracks: [
-          { id: "1", title: "Ice Melody", artist: "Inuit Throat Singers", duration: "4:15" },
-          { id: "2", title: "Aurora Voices", artist: "Sami Ensemble", duration: "3:48" },
-          { id: "3", title: "Tundra Rhythm", artist: "Siberian Collective", duration: "5:03" }
-        ],
-        duration: "39 min",
-        theme: "Nature",
-        era: "Traditional",
-        region: "Arctic",
-        curator: "Olaf Petersen",
-        curatorPick: true,
-        coverColor: "#3b82f6"
-      },
-      {
-        id: "andean",
-        title: "Andean Peaks",
-        description: "Mountain music from the Andes region",
-        tracks: [
-          { id: "1", title: "Condor Flight", artist: "Quechua Musicians", duration: "4:22" },
-          { id: "2", title: "Panpipe Valley", artist: "Bolivian Ensemble", duration: "3:57" },
-          { id: "3", title: "Mountain Spirit", artist: "Peruvian Collective", duration: "5:14" }
-        ],
-        duration: "44 min",
-        theme: "Folk",
-        era: "Traditional",
-        region: "South America",
-        curator: "Carlos Mendez",
-        curatorPick: false,
-        coverColor: "#84cc16"
-      }
-    ];
-  };
 
   const filterAndSortCollections = () => {
     let result = [...collections];
@@ -267,31 +84,6 @@ export default function LibraryPage() {
     
     if (filters.curatorPick) {
       result = result.filter(collection => collection.curatorPick);
-    }
-    
-    // Apply sorting
-    switch(sortBy) {
-      case "newest":
-        // In a real app, we'd sort by date added
-        result = [...result].reverse();
-        break;
-      case "duration":
-        result.sort((a, b) => {
-          const aMins = parseInt(a.duration);
-          const bMins = parseInt(b.duration);
-          return bMins - aMins;
-        });
-        break;
-      case "tracks":
-        result.sort((a, b) => b.tracks.length - a.tracks.length);
-        break;
-      default:
-        // Popular (curator picks first, then by title)
-        result.sort((a, b) => {
-          if (a.curatorPick && !b.curatorPick) return -1;
-          if (!a.curatorPick && b.curatorPick) return 1;
-          return a.title.localeCompare(b.title);
-        });
     }
     
     // Pagination - show only first page*12 items
@@ -351,6 +143,28 @@ export default function LibraryPage() {
   const getUniqueValues = (key: keyof Collection) => {
     return Array.from(new Set(collections.map(c => c[key] as string)));
   };
+
+  // Add Collection and Track interfaces for typing
+  interface Track {
+    id: string;
+    title: string;
+    artist: string;
+    duration: string;
+  }
+
+  interface Collection {
+    id: string;
+    title: string;
+    description: string;
+    tracks: Track[];
+    duration: string;
+    theme: string;
+    era: string;
+    region: string;
+    curator: string;
+    curatorPick: boolean;
+    coverColor: string;
+  }
 
   return (
     <>

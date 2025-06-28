@@ -1,29 +1,22 @@
 // app/blog/page.tsx
 'use client';
 
-import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { 
   Search, 
   BookOpen, 
-  Music, 
   Users, 
   Clock, 
   Tag, 
   Calendar,
   ArrowRight,
   Play,
-  ChevronRight,
-  Sun,
-  Moon,
-  Palette
+  ChevronRight
 } from "lucide-react";
 import clsx from "clsx";
-import useSWR from "swr";
 import { auth } from "../../firebase";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { useRouter } from "next/navigation";
-import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
+import { getFirestore, doc, getDoc } from "firebase/firestore";
 import ThemeToggle from "../../components/ThemeToggle";
 import LoginButton from "../../components/LoginButton";
 import { useThemeContext } from "../../components/ThemeContext";
@@ -41,11 +34,8 @@ type BlogPost = {
   featured?: boolean;
 };
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
-
 export default function BlogPage() {
   const { theme, setTheme } = useThemeContext();
-  const [userId, setUserId] = useState<string | null>(null);
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,14 +44,9 @@ export default function BlogPage() {
   const [loading, setLoading] = useState(true);
   const db = typeof window !== "undefined" ? getFirestore() : null;
 
-  // Example: fetch blog posts if you want to make this dynamic
-  // const { data: blogData, error: blogError } = useSWR("/api/blog", fetcher);
-  // Use blogData to render posts dynamically
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user && db) {
-        setUserId(user.uid);
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
           const data = userDoc.data();
@@ -70,7 +55,7 @@ export default function BlogPage() {
       }
     });
     return () => unsubscribe();
-  }, [db]);
+  }, [db, setTheme]);
 
   useEffect(() => {
     document.documentElement.className = theme;
@@ -116,13 +101,6 @@ export default function BlogPage() {
     document.documentElement.className = theme;
     filterPosts();
   }, [posts, searchQuery, activeCategory, activeTag, theme, filterPosts]);
-
-  const handleThemeChange = async (newTheme: "light" | "dark" | "pastel") => {
-    setTheme(newTheme);
-    if (userId && db) {
-      await setDoc(doc(db, "users", userId), { theme: newTheme }, { merge: true });
-    }
-  };
 
   const generateBlogPosts = (): BlogPost[] => {
     return [

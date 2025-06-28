@@ -8,24 +8,15 @@ import {
   Music, 
   BookOpen,
   Users,
-  Newspaper,
-  Sun,
-  Moon,
-  Palette
+  Newspaper
 } from "lucide-react";
 import clsx from "clsx";
 import {auth} from "../../firebase";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import useSWR from "swr";
-import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
-import ThemeToggle from "../../components/ThemeToggle";
-import LoginButton from "../../components/LoginButton";
+import { getFirestore, doc, getDoc } from "firebase/firestore";
 import { useThemeContext } from "../../components/ThemeContext";
 import NavBar from "../../components/NavBar";
-
-type Theme = "light" | "dark" | "pastel";
 
 interface TeamMember {
   id: string;
@@ -43,11 +34,8 @@ interface PressMention {
   date: string;
 }
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
-
 export default function AboutPage() {
   const { theme, setTheme } = useThemeContext();
-  const [userId, setUserId] = useState<string | null>(null);
   const db = typeof window !== "undefined" ? getFirestore() : null;
   const [activeMission, setActiveMission] = useState(0);
   const router = useRouter();
@@ -56,7 +44,6 @@ export default function AboutPage() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user && db) {
-        setUserId(user.uid);
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
           const data = userDoc.data();
@@ -67,14 +54,7 @@ export default function AboutPage() {
       }
     });
     return () => unsubscribe();
-  }, [db, router]);
-
-  const handleThemeChange = async (newTheme: Theme) => {
-    setTheme(newTheme);
-    if (userId && db) {
-      await setDoc(doc(db, "users", userId), { theme: newTheme }, { merge: true });
-    }
-  };
+  }, [db, router, setTheme]);
 
   const teamMembers: TeamMember[] = [
     {

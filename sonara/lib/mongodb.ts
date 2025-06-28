@@ -10,12 +10,13 @@ if (!process.env.MONGODB_URI) {
   throw new Error("Please add your Mongo URI to .env");
 }
 
+// Use (globalThis as Record<string, unknown>) for _mongoClientPromise to avoid 'any' and 'unknown' type errors
 if (process.env.NODE_ENV === "development") {
-  if (!(global as any)._mongoClientPromise) {
+  if (!(globalThis as Record<string, unknown>)._mongoClientPromise) {
     client = new MongoClient(uri, options);
-    (global as any)._mongoClientPromise = client.connect();
+    (globalThis as Record<string, unknown>)._mongoClientPromise = client.connect();
   }
-  clientPromise = (global as any)._mongoClientPromise;
+  clientPromise = (globalThis as Record<string, unknown>)._mongoClientPromise as Promise<MongoClient>;
 } else {
   client = new MongoClient(uri, options);
   clientPromise = client.connect();

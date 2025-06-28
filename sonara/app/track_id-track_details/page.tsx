@@ -16,23 +16,12 @@ import {
   Globe,
   Disc,
   Clock,
-  ArrowLeft,
-  Sun,
-  Moon,
-  Palette,
   Headphones
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
-import {auth} from "../../firebase";
-import { onAuthStateChanged } from "firebase/auth";
-import Link from "next/link";
-import ThemeToggle from "../../components/ThemeToggle";
-import LoginButton from "../../components/LoginButton";
-import { useThemeContext } from "../../components/ThemeContext";
+import {useThemeContext} from "../../components/ThemeContext";
 import NavBar from "../../components/NavBar";
-
-type Theme = "light" | "dark" | "pastel";
 
 interface Artist {
   id: string;
@@ -71,7 +60,6 @@ export default function TrackPage({ params }: { params: { id: string } }) {
   const [volume, setVolume] = useState(80);
   const [duration, setDuration] = useState(0);
   const [relatedTracks, setRelatedTracks] = useState<Track[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Simulate data loading
@@ -178,7 +166,6 @@ export default function TrackPage({ params }: { params: { id: string } }) {
       ]);
       
       setDuration(272); // 4:32 in seconds
-      setLoading(false);
     }, 800);
   }, [params.id]);
 
@@ -190,10 +177,6 @@ export default function TrackPage({ params }: { params: { id: string } }) {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-  };
-
-  const handleBack = () => {
-    router.back();
   };
 
   return (

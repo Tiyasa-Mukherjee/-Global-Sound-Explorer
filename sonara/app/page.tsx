@@ -3,9 +3,6 @@
 
 import { useEffect } from "react";
 import { 
-  Sun, 
-  Moon, 
-  Palette, 
   Globe, 
   Headphones, 
   Music, 

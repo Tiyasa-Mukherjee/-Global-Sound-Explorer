@@ -7,7 +7,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const db = client.db();
     const collections = await db.collection("collections").find({}).toArray();
     res.status(200).json(collections);
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: "Failed to fetch collections" });
   }
 }

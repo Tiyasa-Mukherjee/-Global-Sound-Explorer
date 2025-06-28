@@ -1,7 +1,7 @@
 // app/explore/page.tsx
 'use client';
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { 
   Globe, 
   Headphones, 
@@ -14,24 +14,14 @@ import {
   ChevronDown,
   ChevronUp,
   Volume2,
-  X,
-  Sun,
-  Moon,
-  Palette
+  X
 } from "lucide-react";
 import clsx from "clsx";
 import {auth} from "../../firebase";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import useSWR from "swr";
-import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
-import ThemeToggle from "../../components/ThemeToggle";
-import LoginButton from "../../components/LoginButton";
+import { onAuthStateChanged } from "firebase/auth";
+import { getFirestore, doc, getDoc } from "firebase/firestore";
 import { useThemeContext } from "../../components/ThemeContext";
 import NavBar from "@/components/NavBar";
-
-type Theme = "light" | "dark" | "pastel";
 
 interface Region {
   id: string;
@@ -47,9 +37,6 @@ interface Region {
   culture: string;
 }
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
-
-// --- MOCK DATA FOR DEMO PURPOSES ---
 const regionMap: Record<string, Region> = {
   "north-america": {
     id: "north-america",
@@ -159,7 +146,6 @@ const allMoods: string[] = [
 
 export default function ExplorePage() {
   const { theme, setTheme } = useThemeContext();
-  const [userId, setUserId] = useState<string | null>(null);
   const db = typeof window !== "undefined" ? getFirestore() : null;
   const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -173,14 +159,11 @@ export default function ExplorePage() {
   const [showFilters, setShowFilters] = useState(false);
   const [mobileView, setMobileView] = useState<"map" | "info">("map");
   const [isLargeScreen, setIsLargeScreen] = useState(false);
-  const router = useRouter();
-  const svgRef = useRef<SVGSVGElement | null>(null);
 
   // Authentication check
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user && db) {
-        setUserId(user.uid);
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
           const data = userDoc.data();
@@ -189,18 +172,11 @@ export default function ExplorePage() {
       }
     });
     return () => unsubscribe();
-  }, [db]);
+  }, [db, setTheme]);
 
   useEffect(() => {
     document.documentElement.className = theme;
   }, [theme]);
-
-  const handleThemeChange = async (newTheme: Theme) => {
-    setTheme(newTheme);
-    if (userId && db) {
-      await setDoc(doc(db, "users", userId), { theme: newTheme }, { merge: true });
-    }
-  };
 
   // Screen size listener
   useEffect(() => {
@@ -251,10 +227,6 @@ export default function ExplorePage() {
     setIsPlaying(!isPlaying);
     // In a real app, this would control audio playback
   };
-
-  // Example: fetch tracks or regions if you want to make this dynamic
-  const { data: tracksData, error: tracksError } = useSWR("/api/tracks", fetcher);
-  // You can use tracksData to render dynamic content
 
   // Add click handler for SVG map
   useEffect(() => {
